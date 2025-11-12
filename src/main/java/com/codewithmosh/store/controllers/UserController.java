@@ -6,6 +6,7 @@ import com.codewithmosh.store.dtos.UpdateUserRequest;
 import com.codewithmosh.store.dtos.UserDto;
 import com.codewithmosh.store.mappers.UserMapper;
 import com.codewithmosh.store.repositories.UserRepository;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 @RestController
@@ -47,7 +49,11 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<UserDto> createUser(@RequestBody RegisterUserRequest request, UriComponentsBuilder uriBuilder) {
+    public ResponseEntity<?> createUser(@Valid @RequestBody RegisterUserRequest request, UriComponentsBuilder uriBuilder) {
+
+        if (userRepository.existsByEmail(request.email())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("email", "Email is already register"));
+        }
         var user = userMapper.toEntity(request);
         user = userRepository.save(user);
         URI uri = uriBuilder.path("/users/{id}").buildAndExpand(user.getId()).toUri();
@@ -90,5 +96,6 @@ public class UserController {
         userRepository.save(user);
         return ResponseEntity.status(HttpStatus.OK).body(Collections.singletonMap("message", "Password changed"));
     }
+
 
 }
